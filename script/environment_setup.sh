@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-echo "Please Enter Your Password:"
-stty -echo
-read ROOT_PASSWD
-stty echo
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
 
 basedir=$PWD
 echo "Begin Environment Setup"
@@ -68,11 +68,11 @@ if [ "$CLEAN" == "1" ]; then
   case $answer in
         Y|y) echo
                 echo "===================Cleaning...===================================="
-  		echo $ROOT_PASSWD | sudo -S rm -rf ~/code
-  		echo $ROOT_PASSWD | sudo -S rm -rf /opt/intel
-  		echo $ROOT_PASSWD | sudo -S rm -rf /opt/openvino_toolkit
+  		sudo rm -rf ~/code
+  		sudo rm -rf /opt/intel
+  		sudo rm -rf /opt/openvino_toolkit
   		if [[ $system_ver = "16.04" && -L "/usr/lib/x86_64-linux-gnu/libboost_python3.so" ]]; then
-    			echo $ROOT_PASSWD | sudo -S rm /usr/lib/x86_64-linux-gnu/libboost_python3.so
+    			sudo rm /usr/lib/x86_64-linux-gnu/libboost_python3.so
   		fi
                 echo "===================Clean finish...====================================";;
         N|n) echo
@@ -83,15 +83,15 @@ fi
 # Setup ROS from Debian
 if [ "$ROS_DEBIAN" == "1" ]; then
   echo "===================Installing ROS from Debian Package...======================="
-  echo $ROOT_PASSWD | sudo -S sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+  sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
   #echo $ROOT_PASSWD | sudo -S apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
   #For those who cannot access hkp protocal 
-  echo $ROOT_PASSWD | curl http://repo.ros2.org/repos.key | sudo apt-key add -
-  echo $ROOT_PASSWD | sudo -S apt-get update
-  echo $ROOT_PASSWD | sudo -S apt-get install -y ros-$ros_ver-desktop-full #For ubuntu16.04 Ros-melodic
+  curl http://repo.ros2.org/repos.key | sudo apt-key add -
+  sudo apt-get update
+  sudo apt-get install -y ros-$ros_ver-desktop-full #For ubuntu16.04 Ros-melodic
 
   if [ ! -f "/etc/ros/rosdep/sources.list.d/20-default.list" ]; then
-    echo $ROOT_PASSWD | sudo -S rosdep init
+    sudo rosdep init
   else
     echo "file already exists, skip..."
   fi
